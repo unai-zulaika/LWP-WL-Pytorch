@@ -3,6 +3,7 @@ import torch.nn.functional as F
 
 from layers import Edge_to_Edge_Conv2d, Edge_to_Node_Conv2d
 
+
 class LWP_WL(torch.nn.Module):
     def __init__(self, K):
         super(LWP_WL, self).__init__()
@@ -18,7 +19,8 @@ class LWP_WL(torch.nn.Module):
         self.pred = torch.nn.Linear(8, 1)
 
         for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.Linear):
+            if isinstance(m, torch.nn.Conv2d) or isinstance(
+                    m, torch.nn.Linear):
                 torch.nn.init.xavier_uniform_(m.weight)
 
     def forward(self, x):
@@ -39,11 +41,12 @@ class LWP_WL(torch.nn.Module):
             if not isinstance(layer, torch.nn.Dropout2d):
                 layer.reset_parameters()
 
+
 class LWP_WL_SIMPLE_CNN(torch.nn.Module):
     def __init__(self, K=10):
         super(LWP_WL_SIMPLE_CNN, self).__init__()
         print("SIMPLE CNN")
-        self.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(4,4))
+        self.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(4, 4))
         # self.conv1_drop = torch.nn.Dropout2d()
         self.fc1 = torch.nn.Linear(int(3136), 32)
         self.fc2 = torch.nn.Linear(32, 16)
@@ -51,7 +54,8 @@ class LWP_WL_SIMPLE_CNN(torch.nn.Module):
         self.pred = torch.nn.Linear(8, 1)
 
         for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.Linear):
+            if isinstance(m, torch.nn.Conv2d) or isinstance(
+                    m, torch.nn.Linear):
                 torch.nn.init.xavier_uniform_(m.weight)
 
     def forward(self, x):
@@ -71,11 +75,12 @@ class LWP_WL_SIMPLE_CNN(torch.nn.Module):
             if not isinstance(layer, torch.nn.Dropout2d):
                 layer.reset_parameters()
 
+
 class LWP_WL_NO_CNN(torch.nn.Module):
     def __init__(self, K=10):
         super(LWP_WL_NO_CNN, self).__init__()
         print("NO CNN")
-        self.fc1 = torch.nn.Linear(K*K, 32)
+        self.fc1 = torch.nn.Linear(K * K, 32)
         self.fc2 = torch.nn.Linear(32, 16)
         self.fc3 = torch.nn.Linear(16, 8)
         self.pred = torch.nn.Linear(8, 1)

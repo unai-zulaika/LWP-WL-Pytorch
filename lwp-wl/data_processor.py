@@ -1,24 +1,28 @@
-import numpy as np
+from random import choice, shuffle
 import os
 import sys
+
+import numpy as np
 import networkx as nx
 import pandas as pd
-from random import choice, shuffle
-import random as rand
+
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 
 path = os.path.abspath(os.path.dirname(__file__))
 DATASETS_PATH = os.path.join(path, 'data/raw/')
 
+
 def clean_data(dataset):
 
-    data = pd.read_csv(
-        DATASETS_PATH + dataset + '.txt', sep='\t', names=['A', 'B', 'weights'])
+    data = pd.read_csv(DATASETS_PATH + dataset + '.txt',
+                       sep='\t',
+                       names=['A', 'B', 'weights'])
 
     data = data[data.A != data.B]
 
     return data
+
 
 def create_graph(dataset):
     G = nx.Graph()
@@ -38,15 +42,18 @@ def create_graph(dataset):
 
     return G
 
+
 def clean_data_unweighted(dataset):
 
-    data = pd.read_csv(
-        DATASETS_PATH + dataset + '.txt', sep='\t', names=['A', 'B'],
-        usecols=[0,1])
+    data = pd.read_csv(DATASETS_PATH + dataset + '.txt',
+                       sep='\t',
+                       names=['A', 'B'],
+                       usecols=[0, 1])
 
     data = data[data.A != data.B]
 
     return data
+
 
 def create_graph_unweighted(dataset):
     G = nx.Graph()
@@ -62,6 +69,7 @@ def create_graph_unweighted(dataset):
         G.add_edge(node_a, node_b)
 
     return G
+
 
 def generate_data(dataset, random, K_DEPTH, unweighted):
 
@@ -123,6 +131,7 @@ def generate_data(dataset, random, K_DEPTH, unweighted):
 
     return x_train, y_train, x_val, y_val, x_test, y_test
 
+
 def get_subgraph(G, node_a, node_b, random, K):
     """ Create subgraph for link prediction targets """
 
@@ -165,13 +174,16 @@ def get_subgraph(G, node_a, node_b, random, K):
 
     return label_nodes_wl(subgraph, subgraph_nodes, node_a, node_b, random)
 
+
 def label_nodes_wl(G, nodelist, node_a, node_b, random):
     """ Order nodes from subgraph with WL algorithm """
 
     nodelist_ordered = []
-    nodelist_initial_etiqs = generate_initial_etiqs(G, nodelist, node_a, node_b)
-    nodelist_full_etiqs = generate_full_etiqs(
-        G, nodelist, nodelist_initial_etiqs, node_a, node_b)
+    nodelist_initial_etiqs = generate_initial_etiqs(G, nodelist, node_a,
+                                                    node_b)
+    nodelist_full_etiqs = generate_full_etiqs(G, nodelist,
+                                              nodelist_initial_etiqs, node_a,
+                                              node_b)
 
     while (len(nodelist_ordered) < len(nodelist_full_etiqs)):
         next_node = choice(list(nodelist_full_etiqs))
@@ -190,8 +202,8 @@ def label_nodes_wl(G, nodelist, node_a, node_b, random):
         nodelist_ordered.append(next_node)
     if random:
         shuffle(nodelist_ordered)
-    matrix = nx.to_numpy_matrix(
-        G.subgraph(nodelist_ordered), nodelist=nodelist_ordered)
+    matrix = nx.to_numpy_matrix(G.subgraph(nodelist_ordered),
+                                nodelist=nodelist_ordered)
     matrix[0, 1] = -1
     matrix[1, 0] = -1
     return matrix

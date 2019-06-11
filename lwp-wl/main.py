@@ -2,7 +2,6 @@ import argparse
 import time
 
 import numpy as np
-from scipy.stats import pearsonr
 
 import torch
 import torch.nn.functional as F
@@ -12,36 +11,62 @@ import data_processor as preprocess_dataset
 from model import LWP_WL, LWP_WL_NO_CNN, LWP_WL_SIMPLE_CNN
 
 parser = argparse.ArgumentParser(description='Main file')
-parser.add_argument('--no-cuda', action='store_true', default=False,
+parser.add_argument('--no-cuda',
+                    action='store_true',
+                    default=False,
                     help='disables CUDA training')
-parser.add_argument('--verbose', action='store_true', default=False,
+parser.add_argument('--verbose',
+                    action='store_true',
+                    default=False,
                     help='verbose training')
-parser.add_argument('--unweighted', action='store_true', default=False,
+parser.add_argument('--unweighted',
+                    action='store_true',
+                    default=False,
                     help='do not compute weigths in adjacency matrix')
-parser.add_argument('--no-cnn', action='store_true', default=False,
+parser.add_argument('--no-cnn',
+                    action='store_true',
+                    default=False,
                     help='disables CNN layer on model')
-parser.add_argument('--simple-cnn', action='store_true', default=False,
+parser.add_argument('--simple-cnn',
+                    action='store_true',
+                    default=False,
                     help='Simple CNN layer without special filters on model')
-parser.add_argument('--random', action='store_true', default=False,
+parser.add_argument('--random',
+                    action='store_true',
+                    default=False,
                     help='enables random node labeling (no W-WL)')
 parser.add_argument(
     '--dataset',
     default='all',
     choices=['all', 'airport', 'collaboration', 'congress', 'forum', 'usair'],
-    help='dataset to process: all (default) | airport | collaboration | congress | forum | usair')
-parser.add_argument(
-    '--dir_data',
-    default='./data/',
-    help='directory where data is located')
-parser.add_argument(
-    '--epochs', '-e', default=10, type=int, help='Number of epochs')
-parser.add_argument(
-    '--k', '-k', default=10, type=int, help='size of the subgraph, K')
-parser.add_argument(
-    '--exp_number', '-en', default=25, type=int, help='Number of experiments')
-parser.add_argument('--lr', type=float, default=0.001,
+    help=
+    'dataset to process: all (default) | airport | collaboration | congress | forum | usair'
+)
+parser.add_argument('--dir_data',
+                    default='./data/',
+                    help='directory where data is located')
+parser.add_argument('--epochs',
+                    '-e',
+                    default=10,
+                    type=int,
+                    help='Number of epochs')
+parser.add_argument('--k',
+                    '-k',
+                    default=10,
+                    type=int,
+                    help='size of the subgraph, K')
+parser.add_argument('--exp_number',
+                    '-en',
+                    default=25,
+                    type=int,
+                    help='Number of experiments')
+parser.add_argument('--lr',
+                    type=float,
+                    default=0.001,
                     help='initial learning rate')
-parser.add_argument('--weight_decay', type=float, default=5e-2,
+parser.add_argument('--weight_decay',
+                    type=float,
+                    default=5e-2,
                     help='weight decay (L2 loss on parameters)')
 
 args = parser.parse_args()
@@ -52,6 +77,7 @@ torch.manual_seed(3)
 np.random.seed(7)
 if args.cuda:
     torch.cuda.manual_seed(3)
+
 
 def initialize_model():
     # model and optimizer
@@ -65,8 +91,7 @@ def initialize_model():
     if args.cuda:
         model.cuda()
 
-    optimizer = optim.Adam(model.parameters(),
-                           lr=args.lr)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)
     return model, optimizer
 
 
@@ -89,6 +114,7 @@ else:
 
 t_total = time.time()
 
+
 def pearson_correlation(numbers_x, numbers_y):
     mean_x = torch.mean(numbers_x)
     mean_y = torch.mean(numbers_y)
@@ -97,8 +123,9 @@ def pearson_correlation(numbers_x, numbers_y):
     x_times_y = subtracted_mean_x * subtracted_mean_y
     x_squared = subtracted_mean_x**2
     y_squared = subtracted_mean_y**2
-    return torch.sum(x_times_y) / torch.sqrt(torch.sum(x_squared) *
-                                             torch.sum(y_squared))
+    return torch.sum(x_times_y) / torch.sqrt(
+        torch.sum(x_squared) * torch.sum(y_squared))
+
 
 def train(epoch, x_train, y_train, x_val, y_val, optimizer, model):
     t = time.time()
@@ -107,14 +134,16 @@ def train(epoch, x_train, y_train, x_val, y_val, optimizer, model):
     # mini batching
     batch_size = 32
     steps = 3000
-    for s in range(int(x_train.shape[0]/32)):
+    for s in range(int(x_train.shape[0] / 32)):
         optimizer.zero_grad()
-        if s == int(x_train.shape[0]/32) - 1:
-            output = model(x_train[s*32:,...])
-            loss_train = F.mse_loss(torch.flatten(output), y_train[s*32:,...])
+        if s == int(x_train.shape[0] / 32) - 1:
+            output = model(x_train[s * 32:, ...])
+            loss_train = F.mse_loss(torch.flatten(output),
+                                    y_train[s * 32:, ...])
         else:
-            output = model(x_train[s*32:(s+1)*32,...])
-            loss_train = F.mse_loss(torch.flatten(output), y_train[s*32:(s+1)*32,...])
+            output = model(x_train[s * 32:(s + 1) * 32, ...])
+            loss_train = F.mse_loss(torch.flatten(output),
+                                    y_train[s * 32:(s + 1) * 32, ...])
         loss_train.backward()
         optimizer.step()
 
@@ -124,10 +153,11 @@ def train(epoch, x_train, y_train, x_val, y_val, optimizer, model):
     loss_val = F.mse_loss(torch.flatten(output), y_val)
 
     if args.verbose:
-        print('Epoch: {:04d}'.format(epoch+1),
+        print('Epoch: {:04d}'.format(epoch + 1),
               'loss_train: {:.4f}'.format(loss_train.item()),
               'loss_val: {:.4f}'.format(loss_val.item()),
               'time: {:.4f}s'.format(time.time() - t))
+
 
 def test(x_test, y_test, total_mse, total_pcc, total_mae, exp_number, model):
     model.eval()
@@ -136,8 +166,7 @@ def test(x_test, y_test, total_mse, total_pcc, total_mae, exp_number, model):
 
     pcc_test = pearson_correlation(y_test, torch.flatten(output))
     mae_test = F.l1_loss(torch.flatten(output), y_test)
-    print("Test set results:",
-          "loss= {:.10f}".format(loss_test.item()),
+    print("Test set results:", "loss= {:.10f}".format(loss_test.item()),
           "pcc= {:.10f}".format(pcc_test),
           "mae= {:.10f}".format(mae_test.item()))
 
@@ -176,7 +205,8 @@ for dataset in datasets:
 
         for epoch in range(args.epochs):
             train(epoch, x_train, y_train, x_val, y_val, optimizer, model)
-        test(x_test, y_test, total_mse, total_pcc, total_mae, exp_number, model)
+        test(x_test, y_test, total_mse, total_pcc, total_mae, exp_number,
+             model)
 
     mse_datasets[dataset] = np.mean(total_mse)
     std_datasets[dataset] = np.std(total_mse)
@@ -189,7 +219,6 @@ for dataset in datasets:
     mae_datasets[dataset] = np.mean(total_mae)
     mae_std_datasets[dataset] = np.std(total_mae)
     total_mae = np.zeros(args.exp_number)
-
 
 for dataset in datasets:
     print("MSE %s: {:,f}".format(mse_datasets[dataset]) % dataset)
