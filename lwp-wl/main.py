@@ -11,7 +11,7 @@ import data_processor as preprocess_dataset
 from model import LWP_WL, LWP_WL_NO_CNN, LWP_WL_SIMPLE_CNN
 
 parser = argparse.ArgumentParser(description='Main file')
-parser.add_argument('--no-cuda',
+parser.add_argument('--disable-cuda',
                     action='store_true',
                     default=False,
                     help='disables CUDA training')
@@ -70,13 +70,23 @@ parser.add_argument('--weight_decay',
                     help='weight decay (L2 loss on parameters)')
 
 args = parser.parse_args()
-args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-# set the seed to ensure reproducible experiments
-torch.manual_seed(3)
-np.random.seed(7)
-if args.cuda:
-    torch.cuda.manual_seed(3)
+# setup cpu or gpu
+args.device = None
+if not args.disable_cuda and torch.cuda.is_available():
+    args.device = torch.device('cuda')
+else:
+    args.device = torch.device('cpu')
+
+# Set random seed
+randseed = 3
+
+np.random.seed(randseed)
+torch.manual_seed(randseed)
+
+if torch.cuda.is_available:
+    torch.backends.cudnn.deterministic = True
+    torch.cuda.manual_seed_all(randseed)
 
 
 def initialize_model():
@@ -88,10 +98,8 @@ def initialize_model():
     else:
         model = LWP_WL(args.k)
 
-    if args.cuda:
-        model.cuda()
-
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
+
     return model, optimizer
 
 
@@ -131,9 +139,11 @@ def train(epoch, x_train, y_train, x_val, y_val, optimizer, model):
     t = time.time()
     model.train()
     model.double()
+
     # mini batching
     batch_size = 32
     steps = 3000
+
     for s in range(int(x_train.shape[0] / 32)):
         optimizer.zero_grad()
         if s == int(x_train.shape[0] / 32) - 1:
@@ -161,18 +171,19 @@ def train(epoch, x_train, y_train, x_val, y_val, optimizer, model):
 
 def test(x_test, y_test, total_mse, total_pcc, total_mae, exp_number, model):
     model.eval()
-    output = model(x_test)
-    loss_test = F.mse_loss(torch.flatten(output), y_test)
+    with torch.no_grad():
+        output = model(x_test)
+        loss_test = F.mse_loss(torch.flatten(output), y_test)
 
-    pcc_test = pearson_correlation(y_test, torch.flatten(output))
-    mae_test = F.l1_loss(torch.flatten(output), y_test)
-    print("Test set results:", "loss= {:.10f}".format(loss_test.item()),
-          "pcc= {:.10f}".format(pcc_test),
-          "mae= {:.10f}".format(mae_test.item()))
+        pcc_test = pearson_correlation(y_test, torch.flatten(output))
+        mae_test = F.l1_loss(torch.flatten(output), y_test)
+        print("Test set results:", "loss= {:.10f}".format(loss_test.item()),
+            "pcc= {:.10f}".format(pcc_test),
+            "mae= {:.10f}".format(mae_test.item()))
 
-    total_mse[exp_number] = loss_test
-    total_pcc[exp_number] = pcc_test
-    total_mae[exp_number] = mae_test
+        total_mse[exp_number] = loss_test
+        total_pcc[exp_number] = pcc_test
+        total_mae[exp_number] = mae_test
 
 
 # for each dataset we will do args.exp_numb experiments
@@ -180,6 +191,7 @@ for dataset in datasets:
     for exp_number in range(args.exp_number):
         print("%s: experiment number %d" % (dataset, exp_number + 1))
         model, optimizer = initialize_model()
+        model = model.to(args.device)
 
         # random data splits
         x_train, y_train, x_val, y_val, x_test, y_test = preprocess_dataset.generate_data(
@@ -188,20 +200,12 @@ for dataset in datasets:
         x_val = np.expand_dims(x_val, axis=1)
         x_test = np.expand_dims(x_test, axis=1)
 
-        x_train = torch.from_numpy(x_train)
-        y_train = torch.from_numpy(y_train)
-        x_val = torch.from_numpy(x_val)
-        y_val = torch.from_numpy(y_val)
-        x_test = torch.from_numpy(x_test)
-        y_test = torch.from_numpy(y_test)
-
-        if args.cuda:
-            x_train = x_train.cuda()
-            y_train = y_train.cuda()
-            x_val = x_val.cuda()
-            y_val = y_val.cuda()
-            x_test = x_test.cuda()
-            y_test = y_test.cuda()
+        x_train = torch.from_numpy(x_train).to(args.device)
+        y_train = torch.from_numpy(y_train).to(args.device)
+        x_val = torch.from_numpy(x_val).to(args.device)
+        y_val = torch.from_numpy(y_val).to(args.device)
+        x_test = torch.from_numpy(x_test).to(args.device)
+        y_test = torch.from_numpy(y_test).to(args.device)
 
         for epoch in range(args.epochs):
             train(epoch, x_train, y_train, x_val, y_val, optimizer, model)
