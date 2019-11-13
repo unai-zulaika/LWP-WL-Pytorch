@@ -38,9 +38,9 @@ parser.add_argument('--random',
 parser.add_argument(
     '--dataset',
     default='all',
-    choices=['all', 'airport', 'collaboration', 'congress', 'forum', 'usair'],
+    choices=['all', 'airport', 'collaboration', 'congress', 'forum', 'usair', 'astro', 'geom'],
     help=
-    'dataset to process: all (default) | airport | collaboration | congress | forum | usair'
+    'dataset to process: all (default) | airport | collaboration | congress | forum | usair | astro | geom'
 )
 parser.add_argument('--dir_data',
                     default='./data/',
@@ -116,7 +116,7 @@ mae_datasets = {}
 mae_std_datasets = {}
 
 if args.dataset == 'all':
-    datasets = ['airport', 'collaboration', 'congress', 'forum']
+    datasets = ['airport', 'collaboration', 'congress', 'forum', 'geom', 'astro']
 else:
     datasets = [args.dataset]
 
@@ -139,10 +139,6 @@ def train(epoch, x_train, y_train, x_val, y_val, optimizer, model):
     t = time.time()
     model.train()
     model.double()
-
-    # mini batching
-    batch_size = 32
-    steps = 3000
 
     for s in range(int(x_train.shape[0] / 32)):
         optimizer.zero_grad()
@@ -178,8 +174,8 @@ def test(x_test, y_test, total_mse, total_pcc, total_mae, exp_number, model):
         pcc_test = pearson_correlation(y_test, torch.flatten(output))
         mae_test = F.l1_loss(torch.flatten(output), y_test)
         print("Test set results:", "loss= {:.10f}".format(loss_test.item()),
-            "pcc= {:.10f}".format(pcc_test),
-            "mae= {:.10f}".format(mae_test.item()))
+              "pcc= {:.10f}".format(pcc_test),
+              "mae= {:.10f}".format(mae_test.item()))
 
         total_mse[exp_number] = loss_test
         total_pcc[exp_number] = pcc_test
