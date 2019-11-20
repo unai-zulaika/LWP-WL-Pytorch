@@ -135,7 +135,7 @@ def generate_data(dataset, random, K_DEPTH, unweighted):
 def get_subgraph(G, node_a, node_b, random, K):
     """ Create subgraph for link prediction targets """
 
-    NODE_SUBGRAPH_SIZE = K / 2
+    NODE_SUBGRAPH_SIZE = int(K / 2)
     SUBGRAPH_SIZE = K
     subgraph_nodes = [node_a]
 
