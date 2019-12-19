@@ -7,10 +7,9 @@ from layers import Edge_to_Edge_Conv2d, Edge_to_Node_Conv2d
 class LWP_WL(torch.nn.Module):
     def __init__(self, K):
         super(LWP_WL, self).__init__()
-        n_channels = 12
+        n_channels = 32
         print("LWP_WL")
         self.conv1 = Edge_to_Edge_Conv2d(K, n_channels)
-        # self.conv2 = Edge_to_Node_Conv2d(K, n_channels)
 
         self.fc1 = torch.nn.Linear(K*K*n_channels, 32)
         self.fc2 = torch.nn.Linear(32, 16)
