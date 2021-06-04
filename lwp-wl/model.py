@@ -91,3 +91,18 @@ class LWP_WL_NO_CNN(torch.nn.Module):
         for layer in self.children():
             if not isinstance(layer, torch.nn.Dropout2d):
                 layer.reset_parameters()
+
+class Node2Vec(torch.nn.Module):
+    """Decoder for using inner product for prediction."""
+
+    def __init__(self, weights, dropout):
+        super(Node2Vec, self).__init__()
+        self.dropout = dropout
+        self.W = torch.nn.Parameter(weights, requires_grad=True)
+
+    def forward(self, n1_indices, n2_indices):
+        n1_val = torch.index_select(self.W, 0, n1_indices)
+        n2_val = torch.index_select(self.W, 0, n2_indices)
+        
+        adj = torch.sum(n1_val * n2_val, dim=1)
+        return adj

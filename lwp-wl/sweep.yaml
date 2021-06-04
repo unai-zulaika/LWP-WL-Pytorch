@@ -1,0 +1,30 @@
+method: bayes
+metric:
+  goal: minimize
+  name: loss
+parameters:
+  lr:
+    distribution: uniform
+    max: 0.1
+    min: 0.001
+  epochs:
+    distribution: int_uniform
+    max: 1000
+    min: 100
+  nhid:
+    distribution: int_uniform
+    max: 64
+    min: 16
+  nclass:
+    distribution: int_uniform
+    max: 32
+    min: 4
+  exp_number:
+    value: 1
+program: main.py
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - --gcn
+  - ${args}

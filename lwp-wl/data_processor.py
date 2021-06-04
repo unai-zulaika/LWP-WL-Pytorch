@@ -1,3 +1,4 @@
+
 from random import choice, shuffle
 import os
 import sys
@@ -20,25 +21,55 @@ def clean_data(dataset):
                        names=['A', 'B', 'weights'])
 
     data = data[data.A != data.B]
-
+    
     return data
 
 
-def create_graph(dataset):
+def create_graph_gcn(dataset, data, data_train):
     G = nx.Graph()
+    
+    if not isinstance(data, pd.DataFrame):
+        data = clean_data(dataset)
 
-    data = clean_data(dataset)
+        if dataset != 'usair':
+            data['weights'] = preprocessing.normalize([data['weights']])[0]   
 
-    if dataset != 'usair':
-        data['weights'] = preprocessing.normalize([data['weights']])[0]
-
-    for index, row in data.iterrows():
-        node_a = int(row[0])
-        node_b = int(row[1])
+    for index, row in data_train.iterrows():
+        node_a = int(row['A'])
+        node_b = int(row['B'])
 
         G.add_node(node_a)
         G.add_node(node_b)
-        G.add_edge(node_a, node_b, weight=float(row[2]))
+        G.add_edge(node_a, node_b, weight=row['weights'])
+    
+    for index, row in data.iterrows():
+        node_a = int(row['A'])
+        node_b = int(row['B'])
+
+        if node_a not in G:
+            G.add_node(node_a)
+        if node_b not in G:    
+            G.add_node(node_b)     
+
+    return G  
+
+
+def create_graph(dataset, data=0):
+    G = nx.Graph()
+    
+    if not isinstance(data, pd.DataFrame):
+        data = clean_data(dataset)
+
+        if dataset != 'usair':
+            data['weights'] = preprocessing.normalize([data['weights']])[0]
+
+    for index, row in data.iterrows():
+        node_a = int(row['A'])
+        node_b = int(row['B'])
+
+        G.add_node(node_a)
+        G.add_node(node_b)
+        G.add_edge(node_a, node_b, weight=float(row['weights']))
 
     return G
 
