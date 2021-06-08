@@ -1,8 +1,6 @@
 import argparse
 import time
 
-import wandb
-
 import numpy as np
 import networkx as nx
 
@@ -21,8 +19,6 @@ from sklearn.model_selection import train_test_split
 from scipy.sparse import identity
 from model import LWP_WL, LWP_WL_NO_CNN, LWP_WL_SIMPLE_CNN, Node2Vec
 from pygcn.models import GCN, InnerProductDecoder
-
-wandb.init(project='lwp-wl', entity='mcm')
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""
@@ -202,7 +198,6 @@ def node2vec():
                     "mae= {:.10f}".format(mae_test.item()))
 
                 total_mse[exp_number] = loss_test
-                wandb.log({"loss": loss_test})
                 total_pcc[exp_number] = pcc_test
                 total_mae[exp_number] = mae_test
 
@@ -223,21 +218,14 @@ def node2vec():
     for dataset in datasets:
         print("MSE %s: {:,f}".format(mse_datasets[dataset]) % dataset)
         print("MSE_STD %s: {:,f}".format(std_datasets[dataset]) % dataset)
-        wandb.log({'MSE_{}'.format(dataset): "{:,f}".format(mse_datasets[dataset])})
-        wandb.log({'MSE_{}'.format(dataset): "{:,f}".format(std_datasets[dataset])})
 
         print("PCC %s: {:,f}".format(pcc_datasets[dataset]) % dataset)
         print("PCC_STD %s: {:,f}".format(pcc_std_datasets[dataset]) % dataset)
-        wandb.log({'PCC_{}'.format(dataset): "{:,f}".format(pcc_datasets[dataset])})
-        wandb.log({'PCC_STD_{}'.format(dataset): "{:,f}".format(pcc_std_datasets[dataset])})
 
         print("MAE %s: {:,f}".format(mae_datasets[dataset]) % dataset)
         print("MAE_STD %s: {:,f}".format(mae_std_datasets[dataset]) % dataset)
-        wandb.log({'MAE_{}'.format(dataset): "{:,f}".format(mae_datasets[dataset])})
-        wandb.log({'MAE_STD_{}'.format(dataset): "{:,f}".format(mae_std_datasets[dataset])})
 
     print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
-    wandb.log({'total_time': "{:.4f}s".format(time.time() - t_total)})
 
     exit()
 
@@ -381,21 +369,14 @@ def gcn():
     for dataset in datasets:
         print("MSE %s: {:,f}".format(mse_datasets[dataset]) % dataset)
         print("MSE_STD %s: {:,f}".format(std_datasets[dataset]) % dataset)
-        wandb.log({'MSE_{}'.format(dataset): "{:,f}".format(mse_datasets[dataset])})
-        wandb.log({'MSE_{}'.format(dataset): "{:,f}".format(std_datasets[dataset])})
 
         print("PCC %s: {:,f}".format(pcc_datasets[dataset]) % dataset)
         print("PCC_STD %s: {:,f}".format(pcc_std_datasets[dataset]) % dataset)
-        wandb.log({'PCC_{}'.format(dataset): "{:,f}".format(pcc_datasets[dataset])})
-        wandb.log({'PCC_STD_{}'.format(dataset): "{:,f}".format(pcc_std_datasets[dataset])})
 
         print("MAE %s: {:,f}".format(mae_datasets[dataset]) % dataset)
         print("MAE_STD %s: {:,f}".format(mae_std_datasets[dataset]) % dataset)
-        wandb.log({'MAE_{}'.format(dataset): "{:,f}".format(mae_datasets[dataset])})
-        wandb.log({'MAE_STD_{}'.format(dataset): "{:,f}".format(mae_std_datasets[dataset])})
 
     print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
-    wandb.log({'total_time': "{:.4f}s".format(time.time() - t_total)})
 
     exit()
 
@@ -523,8 +504,6 @@ torch.manual_seed(randseed)
 if torch.cuda.is_available:
     torch.backends.cudnn.deterministic = True
     torch.cuda.manual_seed_all(randseed)
-
-wandb.config.update(args)  # adds all of the arguments as config variables
 
 def initialize_model():
     # model and optimizer
