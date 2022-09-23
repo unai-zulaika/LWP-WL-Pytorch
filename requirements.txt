@@ -51,7 +51,7 @@ pathtools==0.1.2
 Pillow==8.2.0
 plotly==4.14.3
 promise==2.3
-protobuf==3.15.4
+protobuf==3.18.3
 psutil==5.8.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
